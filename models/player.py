@@ -7,7 +7,7 @@ from models.treasure import Treasure
 from models.trap import Trap
 from models.door import Door
 from models.powerup import PowerUp
-from config import STRATEGIC_BONUS
+from config import DOOR_COST, STRATEGIC_BONUS, TerrainType
 
 Coord = Tuple[int, int]
 
@@ -29,6 +29,7 @@ class Player:
         self.turns_taken: int = 0
         self.treasures_collected: int = 0
         self.traps_hit: int = 0
+        self.terrain_delay_turns: int = 0
 
     # ------------------------------------------------------------------
     # Movement
@@ -39,6 +40,11 @@ class Player:
         return board.get_tile(*target).is_walkable
 
     def move(self, board: Board, target: Coord) -> ActionResult:
+        if self.terrain_delay_turns > 0:
+            self.terrain_delay_turns -= 1
+            self.turns_taken += 1
+            return ActionResult(True, f"{self.name} is slowed by the terrain and must wait.")
+
         if not self.can_move(board, target):
             return ActionResult(False, f"{self.name} cannot move to {target}: blocked.")
 
@@ -47,7 +53,12 @@ class Player:
         result = ActionResult(True, f"{self.name} moved to {target}.")
 
         occupant = tile.occupant
-        if isinstance(occupant, Treasure) and not occupant.collected:
+        if isinstance(occupant, Door) and occupant.locked:
+            occupant.open()
+            self.score -= DOOR_COST
+            result.message += f" Paid {DOOR_COST} to unlock the door."
+            result.score_delta -= DOOR_COST
+        elif isinstance(occupant, Treasure) and not occupant.collected:
             gained = occupant.collect()
             self.score += gained
             self.treasures_collected += 1
@@ -73,6 +84,9 @@ class Player:
             result.message += f" Picked up power-up '{occupant.kind}' (+{bonus})."
             result.score_delta += bonus
 
+        if tile.terrain in (TerrainType.MUD, TerrainType.WATER):
+            self.terrain_delay_turns = 1
+
         self.turns_taken += 1
         return result
 
@@ -88,10 +102,12 @@ class Player:
         tile = board.get_tile(*target)
         if not isinstance(tile.occupant, Door):
             return ActionResult(False, "No door there.")
-        opened = tile.occupant.open()
+        door = tile.occupant
+        opened = door.open()
         self.turns_taken += 1
         if opened:
-            return ActionResult(True, f"{self.name} opened the door at {target}.")
+            self.score -= DOOR_COST
+            return ActionResult(True, f"{self.name} paid {DOOR_COST} to open the door at {target}.", -DOOR_COST)
         return ActionResult(True, f"Door at {target} was already open.")
 
     def place_obstacle(self, board: Board, target: Coord, turns: int = 3) -> ActionResult:

@@ -2,7 +2,7 @@ from __future__ import annotations
 import random
 from typing import List, Tuple, Optional, Iterable
 
-from config import TerrainType
+from config import TerrainType, TREASURE_BASE_VALUE
 from models.tile import Tile
 from models.treasure import Treasure
 from models.trap import Trap
@@ -76,8 +76,7 @@ class Board:
             if (r, c) in ((0, 0), (self.rows - 1, self.cols - 1)):
                 continue
             if cls is Treasure:
-                value = self._rng.randint(*kwargs.get("value_range", (20, 100)))
-                tile.occupant = Treasure(value=value)
+                tile.occupant = Treasure(value=TREASURE_BASE_VALUE)
             else:
                 tile.occupant = cls()
             placed += 1

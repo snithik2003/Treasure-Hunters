@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Optional, List
 from dataclasses import dataclass, field
 
-from config import Difficulty, GRID_SIZES, MAX_TURNS
+from config import Difficulty, DIFFICULTY_SETTINGS, GRID_SIZES, MAX_TURNS, COLOR_HUMAN, COLOR_AI
 from models.board import Board
 from models.player import Player, ActionResult
 from models.ai_player import AIPlayer
@@ -13,10 +13,10 @@ class Game:
         self.difficulty = difficulty
         rows, cols = GRID_SIZES[difficulty]
         self.board = Board(rows, cols, seed=seed)
-        self.board.generate()
+        self.board.generate(**DIFFICULTY_SETTINGS[difficulty])
 
-        self.human = Player("Human", start=(0, 0), color=(70, 140, 255))
-        self.ai = AIPlayer("AI", start=(rows - 1, cols - 1), color=(255, 90, 90))
+        self.human = Player("Human", start=(0, 0), color=COLOR_HUMAN)
+        self.ai = AIPlayer("AI", start=(rows - 1, cols - 1), color=COLOR_AI)
 
         self.turn_count = 0
         self.current_player_is_human = True

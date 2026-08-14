@@ -22,9 +22,10 @@ class Tile:
             return False
         if not TERRAIN_WALKABLE[self.terrain]:
             return False
-        # A closed, locked door blocks the tile until opened.
+        # A locked door can be entered and charges the player on entry.
         occ = self.occupant
-        if occ is not None and getattr(occ, "blocks_movement", False):
+        if (occ is not None and getattr(occ, "blocks_movement", False)
+            and not getattr(occ, "locked", False)):
             return False
         return True
 
