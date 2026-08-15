@@ -5,6 +5,3 @@ __pycache__/
 .env
 build/
 dist/
-ai/
-ui/
-utils/
